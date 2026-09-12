@@ -1,0 +1,431 @@
+{
+  "capturedAt": "2026-09-12T10:24:47.234Z",
+  "node": "v24.21.0",
+  "scope": [
+    "src",
+    "test",
+    "package.json",
+    "package-lock.json",
+    "vite.config.js",
+    "index.html",
+    ".gitignore"
+  ],
+  "upstream": {
+    "repository": "https://github.com/ChumponphatRangsee/iron_talon.git",
+    "commit": "88e390fa97f7aa663240af3b23bfda05d0cbdef5",
+    "files": {
+      "src/App.jsx": {
+        "sha256": "ab887988b1cd5cb3f1732ad378ecf90c7d98a6953b802842189515f030fad10f",
+        "normalizedSha256": "34a102e020ebab319b1c0846555307a1f9346cb98eafb451e21b3efd103e7205"
+      },
+      "src/game/audio/index.js": {
+        "sha256": "1dea3ade232344cbf18550d7e113bc7a1b2835fd4cb8dfdf7f592c0bcd61f228",
+        "normalizedSha256": "0cd2bbbeaf061aa6a6a30a1afe81e0c06c2a11faf6df75e52f1dad491a3e0b39"
+      },
+      "src/game/constants.js": {
+        "sha256": "e7ca843a5f1ac5073078467a3bfd53e648663906cd0100e90191f2cb925ad33d",
+        "normalizedSha256": "b014066d462b51f5f7264572a5cf17b330af916d48bc56f9907f84a5d08d4238"
+      },
+      "src/game/core/constants.js": {
+        "sha256": "77b77bc4a086e76a527a1d0bbe8bed0a1a252c20eaf561db4001f4ad3b6c6ef7",
+        "normalizedSha256": "7b102c0e814a48092621a22d09c7a2480f0b35e204abfd1c4a849da8c4548d92"
+      },
+      "src/game/core/math.js": {
+        "sha256": "ac77dbe4dcded06f2afce0cde972deffe696c128425fbb2386529c87b9d93e9d",
+        "normalizedSha256": "41d9a7b5105216b9f8b2c119b3f826e280740c6d146550d01c4ed35051d8e86d"
+      },
+      "src/game/effects/index.js": {
+        "sha256": "51f2e5244d4bb9bc544862acb0d7bdeac6b5950a6cfef9514023c073b587623e",
+        "normalizedSha256": "360825e8cd812cc0c3cf92ebecb1fae763857c564c71171f000e08dc3ee989fd"
+      },
+      "src/game/enemies/index.js": {
+        "sha256": "74bc4a6ae2cfde31bca4e9e432ca7b6e02a2f32a0b0d13bea2a6df37acbd6d87",
+        "normalizedSha256": "686a2c8859ed011589912b9033c2c2eda086b4a9e96cf0c009e6783e928acf1f"
+      },
+      "src/game/engine.js": {
+        "sha256": "301f0b2921c10b3261ba2984fd4376628464080d56357d197b76b413b53ef49d",
+        "normalizedSha256": "2c16098b2fe3381a9faa0888838b316ca6c5be7454611bd9a49366abd2b3102d"
+      },
+      "src/game/input/disposeInput.js": {
+        "sha256": "b80853d1e1eb10712a7fee70c9260014eacc22a2c575266502fa259e2647d86e",
+        "normalizedSha256": "0ea0f78159a7ec31131a03fbc0b6dd4be13583a2357747be600b838363a07bbe"
+      },
+      "src/game/loop/disposeRuntime.js": {
+        "sha256": "9cdfc7f959e25972b01b131e4919085f687a152151b5d3565b254f63a23bad54",
+        "normalizedSha256": "6e1b1bc94f593737ad2bda62366cc98eb039f875d673ad4be686b54c4f64ea2d"
+      },
+      "src/game/player/actions.js": {
+        "sha256": "eb7461630b497ae8d4ce670b6ef5ef1a5fa9a05a2e32b6207e9c665a63938f66",
+        "normalizedSha256": "9639166c9b94cc8524d5cc7c585d379b83cc17dd71eb168ffc6eaacc49777b74"
+      },
+      "src/game/projectiles/index.js": {
+        "sha256": "77ffb1441944d68e10a2190cc6dbc4957eb4d383a935a97e92304199b5ae81cc",
+        "normalizedSha256": "b70e25341411afaa651e1c047d2579a56858601e67863ac6fd53838e3f760730"
+      },
+      "src/game/runtime/createGameRuntime.js": {
+        "sha256": "4da77d025d891a1f77e505fcd0d3ce40fc5e7f3135f7f91bf03a5bf4ec7b2fe8",
+        "normalizedSha256": "bc417f659daa0d6a2c8debf49ed1e24c7c71368fe84d977066941a652f2cb0f9"
+      },
+      "src/game/runtime/index.js": {
+        "sha256": "5230fe17af3b4c7378b3ae8ae92c620bfa7ba9a8c576e5b667e4a5897443f722",
+        "normalizedSha256": "e3d6a95314a4f1e80ab97b4c5415b5a31bd1ca2de1733006397decb2da950a22"
+      },
+      "src/game/scene/index.js": {
+        "sha256": "eb3f7d73f7f57e7ca4cfb583a7f54dd9a2ddb4cf0ac7f841ef2ceef2eda8927a",
+        "normalizedSha256": "98f27f515513a2a3c8a7b9abef0a2d484e96c455fe4e7a8ea1ac2c9e0991a575"
+      },
+      "src/game/state/uiState.js": {
+        "sha256": "1296417aec76b9fe37603cb1136eb39b4b0fb102845923e1b104b5a73bb4225f",
+        "normalizedSha256": "e3e64f0eeb12d0ea642993205ef70535a5394b2e74064f26477eebe7a3a492fc"
+      },
+      "src/main.jsx": {
+        "sha256": "e6575f17a2a2b89583a9b2a1bb01db30bdbc598515eeb5d4009c31968c0b6d4c",
+        "normalizedSha256": "080f1ace3c3b757be61441e0fd63a0bc39b398a7a8a964abda7d811b5668932f"
+      },
+      "src/ui/AbilityBtn.jsx": {
+        "sha256": "58ab791e64123a363475e247199054daf1a98e2219946ffdad716315af69fb46",
+        "normalizedSha256": "c0793d657077709e4fac7c079175707393573cd0dee2cb40bbd37d184092eb99"
+      },
+      "src/ui/GameOverOverlay.jsx": {
+        "sha256": "cf2f324d512c2af28eabe29ec7136e93f8a581c07e3e96453fd31fc537e02eb0",
+        "normalizedSha256": "5d1798cc46e4a225538e91c4f9880c423c0d28504cd98dca3dfe201c5403af2d"
+      },
+      "src/ui/MenuOverlay.jsx": {
+        "sha256": "6731a587413da3b9cb939a25b283f54e36fe8076010601c2345154968b3ed2f7",
+        "normalizedSha256": "f530c7035856d28dd20897a653e4e16be4dbc441762ca6718d3e2b31d77ba8a7"
+      },
+      "src/ui/PlayingHud.jsx": {
+        "sha256": "755e52bd537251765c751e690b653b205dda7f0458af38ded78fdb49f9425ac9",
+        "normalizedSha256": "9064543ac81cf548d6a8f5227fe7a875dca676f9bab6522ecf05c7ee84d03893"
+      },
+      "src/ui/VictoryOverlay.jsx": {
+        "sha256": "c0c3b770d46c682e35b1a59b85cf5e5ddad19ac4609ae3f6b0bfc2bc30e172e5",
+        "normalizedSha256": "323b73ab3ae787eb3f989983f0f25d2b8af4de74c7e0a7b29b46f65b62691393"
+      },
+      "src/utils/math.js": {
+        "sha256": "3d05b063fee9af752916463144fe628aad7384a0d38cc0eea89cc8711852af08",
+        "normalizedSha256": "cd8ea78ab22854c76c0dff84acb810711b743a5705dc40f5de59f25f840ab491"
+      },
+      "package.json": {
+        "sha256": "dda1b5745b8689177db72875af172174523687bcb23da014d8a4d54cddf97b33",
+        "normalizedSha256": "fe23c0a7545838606fb559129de7b502faf9740074b5285b3f7fd973fc85eb56"
+      },
+      "package-lock.json": {
+        "sha256": "aafd0a836a0884527d550afeae7c682ab16609434fb00c4c646c219ec7a2c9f7",
+        "normalizedSha256": "ccb811f81c89b59fd3a4ee59ef0c50cb92b4a23d72d6d2963afc05dee91e5588"
+      },
+      "vite.config.js": {
+        "sha256": "3961be5489a7ae8b57016d27291a1de9f13fe656972962a49ac185c0085cc5b1",
+        "normalizedSha256": "6be7aaa305d8a8fc3608417d2a16094d62b781323c0f670772178eccb3ca00a9"
+      },
+      "index.html": {
+        "sha256": "905eaaef8994a32c3094c3231ce90b7369c087d4f7610c45a81262b3a9847f41",
+        "normalizedSha256": "894078ed629cf973eb9ef7cc8e38823a409270fa6b643c8ea1ce0a00c7dd7627"
+      },
+      ".gitignore": {
+        "sha256": "6851ededa1dff3036bd3fcdf95a3d15f1eb990e6b51f29b002fc0df7071c3975",
+        "normalizedSha256": "fa65a5db9df3c4473ecf8daaf3c2c57be1d73b69173edfaf680237a9f47002d3"
+      }
+    }
+  },
+  "local": {
+    "src/App.jsx": {
+      "sha256": "7526d3b4f0c22b16993716e685fb72d885c4044ff16d649cd82b5ff12383b936",
+      "normalizedSha256": "7526d3b4f0c22b16993716e685fb72d885c4044ff16d649cd82b5ff12383b936"
+    },
+    "src/game/audio/index.js": {
+      "sha256": "0cd2bbbeaf061aa6a6a30a1afe81e0c06c2a11faf6df75e52f1dad491a3e0b39",
+      "normalizedSha256": "0cd2bbbeaf061aa6a6a30a1afe81e0c06c2a11faf6df75e52f1dad491a3e0b39"
+    },
+    "src/game/constants.js": {
+      "sha256": "b014066d462b51f5f7264572a5cf17b330af916d48bc56f9907f84a5d08d4238",
+      "normalizedSha256": "b014066d462b51f5f7264572a5cf17b330af916d48bc56f9907f84a5d08d4238"
+    },
+    "src/game/core/constants.js": {
+      "sha256": "7b102c0e814a48092621a22d09c7a2480f0b35e204abfd1c4a849da8c4548d92",
+      "normalizedSha256": "7b102c0e814a48092621a22d09c7a2480f0b35e204abfd1c4a849da8c4548d92"
+    },
+    "src/game/core/math.js": {
+      "sha256": "41d9a7b5105216b9f8b2c119b3f826e280740c6d146550d01c4ed35051d8e86d",
+      "normalizedSha256": "41d9a7b5105216b9f8b2c119b3f826e280740c6d146550d01c4ed35051d8e86d"
+    },
+    "src/game/effects/index.js": {
+      "sha256": "360825e8cd812cc0c3cf92ebecb1fae763857c564c71171f000e08dc3ee989fd",
+      "normalizedSha256": "360825e8cd812cc0c3cf92ebecb1fae763857c564c71171f000e08dc3ee989fd"
+    },
+    "src/game/enemies/index.js": {
+      "sha256": "686a2c8859ed011589912b9033c2c2eda086b4a9e96cf0c009e6783e928acf1f",
+      "normalizedSha256": "686a2c8859ed011589912b9033c2c2eda086b4a9e96cf0c009e6783e928acf1f"
+    },
+    "src/game/engine.js": {
+      "sha256": "8d352a59f80c2ca2b4263f4bdc3cf9bce86e216123c7e12092564bf660d066a7",
+      "normalizedSha256": "8d352a59f80c2ca2b4263f4bdc3cf9bce86e216123c7e12092564bf660d066a7"
+    },
+    "src/game/input/disposeInput.js": {
+      "sha256": "ea28ffce82337b48fd2e6ad8c2e3863ae3089864e743823e024be06a83e6a9dd",
+      "normalizedSha256": "ea28ffce82337b48fd2e6ad8c2e3863ae3089864e743823e024be06a83e6a9dd"
+    },
+    "src/game/loop/disposeRuntime.js": {
+      "sha256": "705535416e1642042ea5cdcbb2432761e175734749a7977747515021eebc48f3",
+      "normalizedSha256": "705535416e1642042ea5cdcbb2432761e175734749a7977747515021eebc48f3"
+    },
+    "src/game/player/actions.js": {
+      "sha256": "4e69761c0296df96b749eb400f4786a61f735ae747895bf2ec6c68b111ccd7e6",
+      "normalizedSha256": "4e69761c0296df96b749eb400f4786a61f735ae747895bf2ec6c68b111ccd7e6"
+    },
+    "src/game/projectiles/index.js": {
+      "sha256": "b70e25341411afaa651e1c047d2579a56858601e67863ac6fd53838e3f760730",
+      "normalizedSha256": "b70e25341411afaa651e1c047d2579a56858601e67863ac6fd53838e3f760730"
+    },
+    "src/game/runtime/createGameRuntime.js": {
+      "sha256": "2e87bb9f0846bced3637cff73ed40b0226ee0b8065ab94df960ac15291e258f7",
+      "normalizedSha256": "2e87bb9f0846bced3637cff73ed40b0226ee0b8065ab94df960ac15291e258f7"
+    },
+    "src/game/runtime/createTimerRegistry.js": {
+      "sha256": "07d7a698654f34bedce7dd4f11a993254c0fc02a139b96b71f6802b0de97e5cf",
+      "normalizedSha256": "07d7a698654f34bedce7dd4f11a993254c0fc02a139b96b71f6802b0de97e5cf"
+    },
+    "src/game/runtime/index.js": {
+      "sha256": "e3d6a95314a4f1e80ab97b4c5415b5a31bd1ca2de1733006397decb2da950a22",
+      "normalizedSha256": "e3d6a95314a4f1e80ab97b4c5415b5a31bd1ca2de1733006397decb2da950a22"
+    },
+    "src/game/scene/index.js": {
+      "sha256": "98f27f515513a2a3c8a7b9abef0a2d484e96c455fe4e7a8ea1ac2c9e0991a575",
+      "normalizedSha256": "98f27f515513a2a3c8a7b9abef0a2d484e96c455fe4e7a8ea1ac2c9e0991a575"
+    },
+    "src/game/simulation/collision.js": {
+      "sha256": "2a7673f6108c37205090aa53f7e3f45b80850a24fff9dc011ef90e4395553009",
+      "normalizedSha256": "2a7673f6108c37205090aa53f7e3f45b80850a24fff9dc011ef90e4395553009"
+    },
+    "src/game/simulation/combat.js": {
+      "sha256": "d789c301220f234da1a3a8ab6b9b30fd4ed21517453d4e0e718ddb512c8d9091",
+      "normalizedSha256": "d789c301220f234da1a3a8ab6b9b30fd4ed21517453d4e0e718ddb512c8d9091"
+    },
+    "src/game/simulation/index.js": {
+      "sha256": "49b21e0595b03a68a434be45e0057a523e92e9aaef8defef6529f7064b13aa1a",
+      "normalizedSha256": "49b21e0595b03a68a434be45e0057a523e92e9aaef8defef6529f7064b13aa1a"
+    },
+    "src/game/simulation/movement.js": {
+      "sha256": "74345ad2ec3c8a82f3c818371e6d8a63a00f66ecf6935680aa3f268287f880f3",
+      "normalizedSha256": "74345ad2ec3c8a82f3c818371e6d8a63a00f66ecf6935680aa3f268287f880f3"
+    },
+    "src/game/simulation/progression.js": {
+      "sha256": "6d49dc5b65edf02c2f9b8f6ebdd7d228c1f894d68741b8816c120ff390ac8dd2",
+      "normalizedSha256": "6d49dc5b65edf02c2f9b8f6ebdd7d228c1f894d68741b8816c120ff390ac8dd2"
+    },
+    "src/game/simulation/state.js": {
+      "sha256": "a04f7f9d9d0d35547c5ae73993a3fb900d7dfe81090d68e58a3b6aa5a56d3cfe",
+      "normalizedSha256": "a04f7f9d9d0d35547c5ae73993a3fb900d7dfe81090d68e58a3b6aa5a56d3cfe"
+    },
+    "src/game/state/uiState.js": {
+      "sha256": "e3e64f0eeb12d0ea642993205ef70535a5394b2e74064f26477eebe7a3a492fc",
+      "normalizedSha256": "e3e64f0eeb12d0ea642993205ef70535a5394b2e74064f26477eebe7a3a492fc"
+    },
+    "src/main.jsx": {
+      "sha256": "080f1ace3c3b757be61441e0fd63a0bc39b398a7a8a964abda7d811b5668932f",
+      "normalizedSha256": "080f1ace3c3b757be61441e0fd63a0bc39b398a7a8a964abda7d811b5668932f"
+    },
+    "src/ui/AbilityBtn.jsx": {
+      "sha256": "c0793d657077709e4fac7c079175707393573cd0dee2cb40bbd37d184092eb99",
+      "normalizedSha256": "c0793d657077709e4fac7c079175707393573cd0dee2cb40bbd37d184092eb99"
+    },
+    "src/ui/GameOverOverlay.jsx": {
+      "sha256": "5d1798cc46e4a225538e91c4f9880c423c0d28504cd98dca3dfe201c5403af2d",
+      "normalizedSha256": "5d1798cc46e4a225538e91c4f9880c423c0d28504cd98dca3dfe201c5403af2d"
+    },
+    "src/ui/MenuOverlay.jsx": {
+      "sha256": "f530c7035856d28dd20897a653e4e16be4dbc441762ca6718d3e2b31d77ba8a7",
+      "normalizedSha256": "f530c7035856d28dd20897a653e4e16be4dbc441762ca6718d3e2b31d77ba8a7"
+    },
+    "src/ui/PlayingHud.jsx": {
+      "sha256": "9064543ac81cf548d6a8f5227fe7a875dca676f9bab6522ecf05c7ee84d03893",
+      "normalizedSha256": "9064543ac81cf548d6a8f5227fe7a875dca676f9bab6522ecf05c7ee84d03893"
+    },
+    "src/ui/VictoryOverlay.jsx": {
+      "sha256": "323b73ab3ae787eb3f989983f0f25d2b8af4de74c7e0a7b29b46f65b62691393",
+      "normalizedSha256": "323b73ab3ae787eb3f989983f0f25d2b8af4de74c7e0a7b29b46f65b62691393"
+    },
+    "src/utils/math.js": {
+      "sha256": "cd8ea78ab22854c76c0dff84acb810711b743a5705dc40f5de59f25f840ab491",
+      "normalizedSha256": "cd8ea78ab22854c76c0dff84acb810711b743a5705dc40f5de59f25f840ab491"
+    },
+    "test/simulation.test.js": {
+      "sha256": "e29c92afde152c15d0ae2bcd78e2732a83ccd1cbdc5402a2ef2c44da532b2a3e",
+      "normalizedSha256": "e29c92afde152c15d0ae2bcd78e2732a83ccd1cbdc5402a2ef2c44da532b2a3e"
+    },
+    "test/timerRegistry.test.js": {
+      "sha256": "46a43c0c54434aae64117e6f55bd63f1bfa3af71e424ef100f6b96c4cb0066e3",
+      "normalizedSha256": "46a43c0c54434aae64117e6f55bd63f1bfa3af71e424ef100f6b96c4cb0066e3"
+    },
+    "package.json": {
+      "sha256": "aed3bd20ca972b72e827e5a8d7437a54684db0530eebb5528c571c2c74c94c7a",
+      "normalizedSha256": "aed3bd20ca972b72e827e5a8d7437a54684db0530eebb5528c571c2c74c94c7a"
+    },
+    "package-lock.json": {
+      "sha256": "37e411efadfac9175da5e43ef9979f25f8371eae4e12877f769d788ebc72159f",
+      "normalizedSha256": "37e411efadfac9175da5e43ef9979f25f8371eae4e12877f769d788ebc72159f"
+    },
+    "vite.config.js": {
+      "sha256": "eca485c281977125366d4800553256e419f364984e615f75a2d2bae54f7857fd",
+      "normalizedSha256": "eca485c281977125366d4800553256e419f364984e615f75a2d2bae54f7857fd"
+    },
+    "index.html": {
+      "sha256": "c4a0e50308784b0c176ab6d244564a3abae522e61d06be2b293949474da9776b",
+      "normalizedSha256": "c4a0e50308784b0c176ab6d244564a3abae522e61d06be2b293949474da9776b"
+    },
+    ".gitignore": {
+      "sha256": "13beb6eb76c11d0204d605ede2bbd7f07c2268eae101dc3e94597fab29d31afa",
+      "normalizedSha256": "13beb6eb76c11d0204d605ede2bbd7f07c2268eae101dc3e94597fab29d31afa"
+    }
+  },
+  "comparison": [
+    {
+      "file": ".gitignore",
+      "status": "modified"
+    },
+    {
+      "file": "index.html",
+      "status": "modified"
+    },
+    {
+      "file": "package-lock.json",
+      "status": "modified"
+    },
+    {
+      "file": "package.json",
+      "status": "modified"
+    },
+    {
+      "file": "src/App.jsx",
+      "status": "modified"
+    },
+    {
+      "file": "src/game/audio/index.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/constants.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/core/constants.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/core/math.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/effects/index.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/enemies/index.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/engine.js",
+      "status": "modified"
+    },
+    {
+      "file": "src/game/input/disposeInput.js",
+      "status": "modified"
+    },
+    {
+      "file": "src/game/loop/disposeRuntime.js",
+      "status": "modified"
+    },
+    {
+      "file": "src/game/player/actions.js",
+      "status": "modified"
+    },
+    {
+      "file": "src/game/projectiles/index.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/runtime/createGameRuntime.js",
+      "status": "modified"
+    },
+    {
+      "file": "src/game/runtime/createTimerRegistry.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/runtime/index.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/scene/index.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/game/simulation/collision.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/simulation/combat.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/simulation/index.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/simulation/movement.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/simulation/progression.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/simulation/state.js",
+      "status": "local-only"
+    },
+    {
+      "file": "src/game/state/uiState.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/main.jsx",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/ui/AbilityBtn.jsx",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/ui/GameOverOverlay.jsx",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/ui/MenuOverlay.jsx",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/ui/PlayingHud.jsx",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/ui/VictoryOverlay.jsx",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "src/utils/math.js",
+      "status": "line-endings-only"
+    },
+    {
+      "file": "test/simulation.test.js",
+      "status": "local-only"
+    },
+    {
+      "file": "test/timerRegistry.test.js",
+      "status": "local-only"
+    },
+    {
+      "file": "vite.config.js",
+      "status": "modified"
+    }
+  ]
+}

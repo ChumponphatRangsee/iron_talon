@@ -2,6 +2,7 @@ import { disposeInputBindings } from "../input/disposeInput";
 
 export function disposeRuntime(gameState, mountRef) {
   if (gameState.animId) cancelAnimationFrame(gameState.animId);
+  gameState.timers?.reset();
   disposeInputBindings(gameState);
   if (gameState.renderer) {
     if (gameState.renderer.domElement?.parentNode) {
@@ -9,10 +10,7 @@ export function disposeRuntime(gameState, mountRef) {
     }
     gameState.renderer.dispose();
   }
-  if (Array.isArray(gameState._timeouts)) {
-    gameState._timeouts.forEach((id) => clearTimeout(id));
-    gameState._timeouts.length = 0;
-  }
+  gameState.audioContext?.close?.().catch?.(() => {});
   if (mountRef?.current?.contains?.(gameState._canvasEl)) {
     mountRef.current.removeChild(gameState._canvasEl);
   }

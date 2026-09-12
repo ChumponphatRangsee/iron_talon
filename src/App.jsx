@@ -11,19 +11,15 @@ export default function App() {
   const [ui, setUi] = useState(createInitialUiState);
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
-    script.onload = () => {
-      const runtime = createGameRuntime({ mountRef, setUi });
-      runtimeRef.current = runtime;
-      runtime.start();
-    };
-    document.head.appendChild(script);
+    const runtime = createGameRuntime({ mountRef, setUi });
+    runtimeRef.current = runtime;
+    runtime.start();
+    if (import.meta.env.DEV) window.__IRON_TALON_RUNTIME__ = runtime;
 
     return () => {
       if (runtimeRef.current) runtimeRef.current.dispose();
+      if (window.__IRON_TALON_RUNTIME__ === runtime) delete window.__IRON_TALON_RUNTIME__;
       runtimeRef.current = null;
-      script.remove();
     };
   }, []);
 

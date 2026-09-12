@@ -1,19 +1,44 @@
+import * as THREE from "three";
 import { ENEMY_TYPES, PLAYER_CFG, WAVES } from "./core/constants";
-import { clamp, lerp } from "./core/math";
+import { clamp } from "./core/math";
+import {
+  advanceWave,
+  chooseEnemyAttack,
+  collidesWall as hitsWall,
+  createEnemyState,
+  createSimulationState,
+  ENEMY_ATTACK,
+  hasLineOfSight,
+  resetPlayerState,
+  stepEnemyMovement,
+  stepPlayerMovement,
+  sweptHit,
+} from "./simulation/index.js";
+
+function bindSimulationState(view, state) {
+  Object.keys(state).forEach((key) => {
+    Object.defineProperty(view, key, {
+      configurable: true,
+      enumerable: true,
+      get: () => state[key],
+      set: (value) => {
+        state[key] = value;
+      },
+    });
+  });
+  view.state = state;
+  return view;
+}
 
 export function initGame(mountRef, G, setUi) {
-    const THREE = window.THREE;
     const el = mountRef.current;
-    const W = el.clientWidth, H = el.clientHeight;
-    G._timeouts = [];
-    const later = (fn, ms) => {
-      const id = setTimeout(fn, ms);
-      G._timeouts.push(id);
-      return id;
-    };
+    let W = el.clientWidth, H = el.clientHeight;
+    const later = (fn, ms) => G.timers.schedule(fn, ms);
+    G.simulation = createSimulationState();
 
     // ── Audio ──────────────────────────────────────────────────────────────
     const actx = new (window.AudioContext || window.webkitAudioContext)();
+    G.audioContext = actx;
     const noise = (dur, vol, freq, type="bandpass", decay=2.5) => {
       try {
         const buf = actx.createBuffer(1, actx.sampleRate*dur, actx.sampleRate);
@@ -64,6 +89,15 @@ export function initGame(mountRef, G, setUi) {
     renderer.setSize(W,H); renderer.shadowMap.enabled=true;
     el.appendChild(renderer.domElement);
     G.renderer = renderer;
+    const resizeRenderer=()=>{
+      W=el.clientWidth; H=el.clientHeight;
+      if(W<=0||H<=0) return;
+      camera.aspect=W/H;
+      camera.updateProjectionMatrix();
+      renderer.setSize(W,H);
+    };
+    window.addEventListener("resize",resizeRenderer);
+    G._resize=resizeRenderer;
 
     scene.add(new THREE.AmbientLight(0xfff4e0, 0.62));
     const sun = new THREE.DirectionalLight(0xfff8e8, 1.4);
@@ -93,7 +127,15 @@ export function initGame(mountRef, G, setUi) {
       r.rotation.x=-Math.PI/2; r.position.y=.02; if(i) r.rotation.z=Math.PI/2; scene.add(r);
     });
 
-    function registerWall(x,z,hw,hd){ G.walls.push({x,z,hw,hd}); G.covers.push({x,z,hw,hd}); }
+    function registerWall(x,z,hw,hd){
+      const wall={x,z,hw,hd};
+      G.walls.push(wall); G.covers.push(wall);
+      return wall;
+    }
+    function removeWall(wall){
+      G.walls=G.walls.filter(candidate=>candidate!==wall);
+      G.covers=G.covers.filter(candidate=>candidate!==wall);
+    }
 
     function addBuilding(x,z,w,d,h,col){
       const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),lmat(col));
@@ -169,8 +211,8 @@ export function initGame(mountRef, G, setUi) {
       const stripe=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.12,8),lmat(0x222222));
       stripe.position.y=.52; g.add(stripe);
       g.position.set(x,.01,z); scene.add(g);
-      G.barrels.push({mesh:g,x,z,alive:true});
-      registerWall(x,z,.32,.32);
+      const collider=registerWall(x,z,.32,.32);
+      G.barrels.push({mesh:g,x,z,alive:true,collider});
     });
 
     // ── Soldier mesh factory ───────────────────────────────────────────────
@@ -216,39 +258,9 @@ export function initGame(mountRef, G, setUi) {
     }
 
     // ── Collision helpers ──────────────────────────────────────────────────
-    function collidesWall(x,z,r=0.38){
-      for(let i=0;i<G.walls.length;i++){
-        const w=G.walls[i];
-        if(Math.abs(x-w.x)<w.hw+r && Math.abs(z-w.z)<w.hd+r) return true;
-      }
-      return false;
-    }
-    function sweptHit(p0,p1,target,radius){
-      const dx=p1.x-p0.x, dy=p1.y-p0.y, dz=p1.z-p0.z;
-      const fx=p0.x-target.x, fy=p0.y-target.y, fz=p0.z-target.z;
-      const a=dx*dx+dy*dy+dz*dz;
-      if(a<1e-5) return (fx*fx+fy*fy+fz*fz)<radius*radius;
-      const b=2*(fx*dx+fy*dy+fz*dz);
-      const c=(fx*fx+fy*fy+fz*fz)-radius*radius;
-      const disc=b*b-4*a*c; if(disc<0) return false;
-      const sq=Math.sqrt(disc), t1=(-b-sq)/(2*a), t2=(-b+sq)/(2*a);
-      return (t1>=0&&t1<=1)||(t2>=0&&t2<=1);
-    }
-    // Line-of-sight: does a wall block from src→dst?
-    function hasLOS(src,dst){
-      const dir=new THREE.Vector3().subVectors(dst,src);
-      const dist=dir.length(); if(dist<0.1) return true;
-      dir.normalize();
-      // sample 6 points along ray
-      for(let t=0.5;t<dist-0.5;t+=dist/6){
-        const x=src.x+dir.x*t, z=src.z+dir.z*t;
-        for(let i=0;i<G.walls.length;i++){
-          const w=G.walls[i];
-          if(Math.abs(x-w.x)<w.hw+.1&&Math.abs(z-w.z)<w.hd+.1) return false;
-        }
-      }
-      return true;
-    }
+    const collidesWall=(x,z,r=0.38)=>hitsWall(G.walls,x,z,r);
+    const hasLOS=(src,dst)=>hasLineOfSight(G.walls,src,dst);
+    const distanceXZ=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 
     const V_TMP1 = new THREE.Vector3();
     const V_TMP2 = new THREE.Vector3();
@@ -264,15 +276,14 @@ export function initGame(mountRef, G, setUi) {
       for(let i=0;i<G.enemies.length;i++){
         const e=G.enemies[i];
         if(!e.alive) continue;
-        const d=pos.distanceTo(e.mesh.position);
+        const d=distanceXZ(pos,e.position);
         if(d<nearestDist){ nearestDist=d; nearest=e; }
       }
       return nearest;
     }
 
     function getMouseAssistedEnemy(pos, mouseWorld, maxRange=13){
-      V_TMP7.subVectors(mouseWorld, pos);
-      V_TMP7.y = 0;
+      V_TMP7.set(mouseWorld.x-pos.x,0,mouseWorld.z-pos.z);
       if(V_TMP7.lengthSq() < 1e-4) return null;
       V_TMP7.normalize();
 
@@ -282,9 +293,9 @@ export function initGame(mountRef, G, setUi) {
       for(let i=0;i<G.enemies.length;i++){
         const e=G.enemies[i];
         if(!e.alive) continue;
-        const d = pos.distanceTo(e.mesh.position);
+        const d = distanceXZ(pos,e.position);
         if(d > maxRange) continue;
-        V_TMP6.subVectors(e.mesh.position, pos);
+        V_TMP6.set(e.position.x-pos.x,0,e.position.z-pos.z);
         V_TMP6.y = 0;
         if(V_TMP6.lengthSq() < 1e-4) continue;
         V_TMP6.normalize();
@@ -342,12 +353,12 @@ export function initGame(mountRef, G, setUi) {
       // damage enemies
       G.enemies.forEach(e=>{
         if(!e.alive) return;
-        const d=e.mesh.position.distanceTo(pos);
+        const d=distanceXZ(e.position,pos);
         if(d<radius){ e.hp-=dmg*(1-d/radius); e.hitFlash=14; if(e.hp<=0&&e.deathTimer<0) killEnemy(e); }
       });
       // damage player (less)
       const P=G.player;
-      const pd=P.mesh.position.distanceTo(pos);
+      const pd=distanceXZ(P.position,pos);
       if(pd<radius&&P.iFrames<=0) damagePlayer(dmg*.45*(1-pd/radius), pos);
 
       // barrel chain reactions
@@ -355,7 +366,7 @@ export function initGame(mountRef, G, setUi) {
         if(!bar.alive) return;
         if(bar.mesh.position.distanceTo(pos)<radius+1.5){
           bar.alive=false; scene.remove(bar.mesh);
-          G.walls=G.walls.filter(w=>!(Math.abs(w.x-bar.x)<.15&&Math.abs(w.z-bar.z)<.15));
+          removeWall(bar.collider);
           later(()=>spawnExplosion(bar.mesh.position.clone(),4,55), 200+Math.random()*300);
         }
       });
@@ -367,28 +378,10 @@ export function initGame(mountRef, G, setUi) {
     const playerLegR=pm.getObjectByName("legR");
     const playerMuzzle=pm.getObjectByName("muzzle");
     scene.add(pm);
-    G.player = {
+    G.player = bindSimulationState({
       mesh:pm,
-      // physics state
-      vel: new THREE.Vector3(),   // current velocity (x,z used; y=0 for ground)
-      facing: 0,                  // rotation.y
-      knockback: new THREE.Vector3(),
-      // stats
-      hp:PLAYER_CFG.maxHp, maxHp:PLAYER_CFG.maxHp,
-      armor:PLAYER_CFG.maxArmor, maxArmor:PLAYER_CFG.maxArmor,
-      ammo:PLAYER_CFG.maxAmmo, maxAmmo:PLAYER_CFG.maxAmmo,
-      grenades:PLAYER_CFG.maxGrenades,
-      // timers
-      shootTimer:0, reloadTimer:0,
-      iFrames:0, stumbleTimer:0,
-      dodgeTimer:0, dodgeDirX:0, dodgeDirZ:0,
-      bobT:0,
-      // cooldowns
-      airstrikeTimer:0, droneTimer:0,
-      // flags
-      alive:true, reloading:false, dodging:false,
       legL:playerLegL, legR:playerLegR, muzzle:playerMuzzle,
-    };
+    }, G.simulation.player);
 
     G.bullets   = [];
     G.eBullets  = [];
@@ -418,20 +411,22 @@ export function initGame(mountRef, G, setUi) {
       P.hp=Math.max(0,P.hp-dmg);
       P.iFrames=28; P.stumbleTimer=12;
       if(srcPos){
-        V_TMP1.subVectors(P.mesh.position,srcPos).normalize();
-        P.knockback.addScaledVector(V_TMP1,.12);   // additive knockback
+        const dx=P.position.x-srcPos.x, dz=P.position.z-srcPos.z;
+        const len=Math.hypot(dx,dz)||1;
+        P.knockback.x+=dx/len*.12; P.knockback.z+=dz/len*.12;
       }
       spawnImpact(P.mesh.position,0xff5500);
       G.sfx.playerHit();
       setUi(u=>({...u,hp:Math.max(0,P.hp),armor:P.armor,flash:true}));
       later(()=>setUi(u=>({...u,flash:false})),190);
-      if(P.hp<=0){ P.alive=false; G.gameState="over"; setUi(u=>({...u,state:"over"})); }
+      if(P.hp<=0){ P.alive=false; G.gameState="over"; G.simulation.phase="over"; setUi(u=>({...u,state:"over"})); }
     }
 
     // ── Enemy spawning ─────────────────────────────────────────────────────
     G.enemies=[];
     function spawnEnemies(waveIdx){
       G.enemies.forEach(e=>scene.remove(e.mesh)); G.enemies=[];
+      G.simulation.enemies=[];
       const wcfg=WAVES[Math.min(waveIdx,WAVES.length-1)];
       const positions=[[-7,-5],[7,-4],[-6,6],[7,6],[0,-8],[-9,2],[9,-2],[0,8],[-7,-9],[7,9],[4,-5],[-4,5],[10,4],[-10,-4],[0,-12],[5,11],[-5,-11]];
       let pi=0;
@@ -447,30 +442,23 @@ export function initGame(mountRef, G, setUi) {
             fadeMats.push(c.material);
             if(c.material.emissive) emissiveMats.push(c.material);
           });
-          G.enemies.push({
+          const enemyState=createEnemyState(type,ex,ez);
+          G.simulation.enemies.push(enemyState);
+          G.enemies.push(bindSimulationState({
             mesh:m, type, cfg:ecfg,
-            hp:ecfg.hp, maxHp:ecfg.hp,
-            vel:new THREE.Vector3(),
-            knockback:new THREE.Vector3(),
-            state:"patrol",
-            patrolDir:new THREE.Vector3((Math.random()-.5),0,(Math.random()-.5)).normalize(),
-            patrolTimer:60+Math.random()*60,
-            shootTimer:Math.random()*ecfg.shootInt,
-            hitFlash:0, deathTimer:-1, deathRotTarget:0,
-            alive:true, droneMarked:0,
-            strafeDir:1, strafeTimer:0,
             emissiveMats, fadeMats,
             muzzle:m.getObjectByName("muzzle"),
             laser:m.getObjectByName("laser"),
-          });
+          }, enemyState));
         }
       });
       return G.enemies.length;
     }
 
     function nextWave(){
-      G.wave++;
-      if(G.wave>=WAVES.length){ G.gameState="win"; setUi(u=>({...u,state:"win"})); return; }
+      const progression=advanceWave(G.simulation,WAVES.length);
+      G.wave=progression.wave;
+      if(progression.complete){ G.gameState="win"; setUi(u=>({...u,state:"win"})); return; }
       G.sfx.levelUp();
       later(()=>{
         const cnt=spawnEnemies(G.wave);
@@ -566,10 +554,10 @@ export function initGame(mountRef, G, setUi) {
     function throwGrenade(){
       const P=G.player;
       if(!P.alive||G.gameState!=="playing"||P.grenades<=0) return;
-      const nearest=getNearestAliveEnemy(P.mesh.position);
-      const dir=nearest?new THREE.Vector3().subVectors(nearest.mesh.position,P.mesh.position):new THREE.Vector3(Math.sin(P.facing),0,Math.cos(P.facing));
+      const nearest=getNearestAliveEnemy(P.position);
+      const dir=nearest?new THREE.Vector3(nearest.position.x-P.position.x,0,nearest.position.z-P.position.z):new THREE.Vector3(Math.sin(P.facing),0,Math.cos(P.facing));
       const m=new THREE.Mesh(new THREE.SphereGeometry(.1,6,6),new THREE.MeshLambertMaterial({color:0x556633}));
-      m.position.copy(P.mesh.position).add(new THREE.Vector3(0,.8,0));
+      m.position.set(P.position.x,.8,P.position.z);
       scene.add(m);
       const spd=.24, vel=dir.clone().normalize().multiplyScalar(spd); vel.y=.17;
       G.grenades.push({mesh:m,vel,life:58,bounces:0,exploded:false});
@@ -582,8 +570,8 @@ export function initGame(mountRef, G, setUi) {
       if(!P.alive||G.gameState!=="playing"||P.airstrikeTimer>0) return;
       P.airstrikeTimer=580; setUi(u=>({...u,airstrikeReady:false}));
       G.sfx.airstrike();
-      const nearest=getNearestAliveEnemy(P.mesh.position);
-      const tgt=nearest?nearest.mesh.position.clone():P.mesh.position.clone().add(new THREE.Vector3(0,0,-5));
+      const nearest=getNearestAliveEnemy(P.position);
+      const tgt=nearest?new THREE.Vector3(nearest.position.x,0,nearest.position.z):new THREE.Vector3(P.position.x,0,P.position.z-5);
       [0,280,560,840].forEach(delay=>{
         later(()=>{
           const sp=new THREE.Vector3((Math.random()-.5)*4,0,(Math.random()-.5)*4);
@@ -620,73 +608,34 @@ export function initGame(mountRef, G, setUi) {
       if(!P.alive) return;
 
       // ── Cooldowns ────────────────────────────────────────────────────
-      if(P.iFrames>0) P.iFrames-=dt;
-      if(P.airstrikeTimer>0){ P.airstrikeTimer-=dt; if(P.airstrikeTimer<=0) setUi(u=>({...u,airstrikeReady:true})); }
-      if(P.droneTimer>0)    { P.droneTimer-=dt;     if(P.droneTimer<=0)     setUi(u=>({...u,droneReady:true})); }
+      const airstrikeWasCooling=P.airstrikeTimer>0;
+      const droneWasCooling=P.droneTimer>0;
 
       // ── Stumble wobble ───────────────────────────────────────────────
-      if(P.stumbleTimer>0){ P.stumbleTimer-=dt; P.mesh.rotation.z=Math.sin(P.stumbleTimer*1.3)*.22*(P.stumbleTimer/12); }
+      let inputX=0,inputZ=0;
+      if(G.joy.active){inputX=G.joy.dx;inputZ=G.joy.dy;}
+      if(G.keys["w"]||G.keys["arrowup"])    inputZ-=1;
+      if(G.keys["s"]||G.keys["arrowdown"])  inputZ+=1;
+      if(G.keys["a"]||G.keys["arrowleft"])  inputX-=1;
+      if(G.keys["d"]||G.keys["arrowright"]) inputX+=1;
+      const movementEvents=stepPlayerMovement(P,{x:inputX,z:inputZ},dt,G.walls);
+      if(airstrikeWasCooling&&P.airstrikeTimer<=0) setUi(u=>({...u,airstrikeReady:true}));
+      if(droneWasCooling&&P.droneTimer<=0) setUi(u=>({...u,droneReady:true}));
+      if(movementEvents.dodgeEnded) setUi(u=>({...u,dodging:false}));
+
+      P.mesh.position.x=P.position.x; P.mesh.position.z=P.position.z;
+      P.mesh.rotation.y=P.facing;
+      if(P.stumbleTimer>0) P.mesh.rotation.z=Math.sin(P.stumbleTimer*1.3)*.22*(P.stumbleTimer/12);
       else P.mesh.rotation.z*=.78;
 
       // ── Dodge roll ───────────────────────────────────────────────────
       // CHARACTER CONTROLLER STYLE: fast, snappy, predictable arc
       if(P.dodging){
-        P.dodgeTimer-=dt;
-        const t=1-P.dodgeTimer/PLAYER_CFG.dodgeDur;  // 0→1
-        const spd=PLAYER_CFG.dodgeSpeed*(1-t*.6);    // decelerates through roll
-        const nx=P.mesh.position.x+P.dodgeDirX*spd*dt;
-        const nz=P.mesh.position.z+P.dodgeDirZ*spd*dt;
-        if(!collidesWall(nx,P.mesh.position.z)&&Math.abs(nx)<22) P.mesh.position.x=nx;
-        if(!collidesWall(P.mesh.position.x,nz)&&Math.abs(nz)<22) P.mesh.position.z=nz;
-        P.mesh.rotation.x=Math.sin(t*Math.PI)*-.5;  // forward lean
-        if(P.dodgeTimer<=0){ P.dodging=false; P.mesh.rotation.x=0; setUi(u=>({...u,dodging:false})); }
+        const t=1-P.dodgeTimer/PLAYER_CFG.dodgeDur;
+        P.mesh.rotation.x=Math.sin(t*Math.PI)*-.5;
       } else {
         // ── Normal movement — Character Controller feel ───────────────
-        let ix=0,iz=0;
-        if(G.joy.active){ix=G.joy.dx;iz=G.joy.dy;}
-        if(G.keys["w"]||G.keys["arrowup"])    iz-=1;
-        if(G.keys["s"]||G.keys["arrowdown"])  iz+=1;
-        if(G.keys["a"]||G.keys["arrowleft"])  ix-=1;
-        if(G.keys["d"]||G.keys["arrowright"]) ix+=1;
-        const ilen=Math.sqrt(ix*ix+iz*iz);
-        if(ilen>0){ix/=ilen;iz/=ilen;}
-
-        // Smooth acceleration / fast deceleration (no ice-skating)
-        const targetVX=ix*PLAYER_CFG.walkSpeed;
-        const targetVZ=iz*PLAYER_CFG.walkSpeed;
-        const moving=ilen>0;
-        const rate=moving?PLAYER_CFG.acceleration:PLAYER_CFG.deceleration;
-        P.vel.x=lerp(P.vel.x,targetVX,rate*dt);
-        P.vel.z=lerp(P.vel.z,targetVZ,rate*dt);
-
-        // Apply knockback on top of controlled velocity
-        if(P.knockback.length()>0.001){
-          P.vel.x+=P.knockback.x*dt; P.vel.z+=P.knockback.z*dt;
-          P.knockback.multiplyScalar(.68);
-        }
-
-        // Move with wall sliding
-        const nx=P.mesh.position.x+P.vel.x*dt;
-        const nz=P.mesh.position.z+P.vel.z*dt;
-        if(!collidesWall(nx,P.mesh.position.z)&&Math.abs(nx)<22) P.mesh.position.x=nx;
-        else P.vel.x*=-.2;
-        if(!collidesWall(P.mesh.position.x,nz)&&Math.abs(nz)<22) P.mesh.position.z=nz;
-        else P.vel.z*=-.2;
-
-        // Facing direction — rotates toward movement direction
-        if(moving){
-          const tFacing=Math.atan2(ix,iz);
-          // Shortest-path angle lerp
-          let da=tFacing-P.facing;
-          while(da> Math.PI) da-=Math.PI*2;
-          while(da<-Math.PI) da+=Math.PI*2;
-          P.facing+=da*0.22*dt;
-          P.mesh.rotation.y=P.facing;
-        }
-
-        // Bob animation
-        if(Math.abs(P.vel.x)+Math.abs(P.vel.z)>0.01){
-          P.bobT+=0.22*dt;
+        if(Math.abs(P.velocity.x)+Math.abs(P.velocity.z)>0.01){
           P.mesh.position.y=Math.abs(Math.sin(P.bobT))*.07;
           const legL=P.legL,legR=P.legR;
           if(legL) legL.rotation.x=Math.sin(P.bobT)*.48;
@@ -697,7 +646,7 @@ export function initGame(mountRef, G, setUi) {
       }
 
       // ── Smooth camera follow ─────────────────────────────────────────
-      const tx=P.mesh.position.x, tz=P.mesh.position.z;
+      const tx=P.position.x, tz=P.position.z;
       const camLerp=0.09*dt;
       camera.position.x+=((tx)   -camera.position.x)*camLerp;
       camera.position.z+=((tz+12)-camera.position.z)*camLerp;
@@ -708,22 +657,22 @@ export function initGame(mountRef, G, setUi) {
       P.shootTimer=Math.max(0,P.shootTimer-dt);
       if(P.reloading){ P.reloadTimer-=dt; if(P.reloadTimer<=0){ P.reloading=false; P.ammo=P.maxAmmo; setUi(u=>({...u,ammo:P.maxAmmo,reloading:false})); } }
 
-      let nearest=getNearestAliveEnemy(P.mesh.position);
+      let nearest=getNearestAliveEnemy(P.position);
       if(G.mouse.active && G.mouse.hasWorld){
-        const assisted = getMouseAssistedEnemy(P.mesh.position, G.mouse.world, 13);
+        const assisted = getMouseAssistedEnemy(P.position, G.mouse.world, 13);
         if(assisted) nearest=assisted;
       }
-      const nd=nearest?P.mesh.position.distanceTo(nearest.mesh.position):Infinity;
+      const nd=nearest?distanceXZ(P.position,nearest.position):Infinity;
       const autoFireByRange = !G.mouse.active && nearest && nd<5;
       const canFire=(G.firing||autoFireByRange) && !P.reloading && P.ammo>0 && P.shootTimer<=0 && nearest && nd<13 && !P.dodging;
       if(canFire){
-        const dir=V_TMP1.subVectors(nearest.mesh.position,P.mesh.position);
+        const dir=V_TMP1.set(nearest.position.x-P.position.x,0,nearest.position.z-P.position.z);
         // Player auto-aims toward target for facing
         P.facing=Math.atan2(dir.x,dir.z); P.mesh.rotation.y=P.facing;
         // Spawn bullet
         const bm=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.42,4),new THREE.MeshBasicMaterial({color:0xffee44}));
         bm.rotation.x=Math.PI/2;
-        const bpos=P.mesh.position.clone().add(new THREE.Vector3(0,.72,0));
+        const bpos=new THREE.Vector3(P.position.x,.72,P.position.z);
         bm.position.copy(bpos); scene.add(bm);
         G.bullets.push({mesh:bm,prevPos:bpos.clone(),dir:dir.clone().normalize(),speed:.42,life:85,dmg:20});
         G.sfx.shot();
@@ -744,12 +693,12 @@ export function initGame(mountRef, G, setUi) {
         for(let i=0;i<G.enemies.length;i++){
           const e=G.enemies[i];
           if(!e.alive||hit) continue;
-          V_TMP2.set(e.mesh.position.x,.7,e.mesh.position.z);
+          V_TMP2.set(e.position.x,.7,e.position.z);
           V_TMP3.set(b.prevPos.x,.7,b.prevPos.z);
           V_TMP4.set(b.mesh.position.x,.7,b.mesh.position.z);
           if(sweptHit(V_TMP3,V_TMP4,V_TMP2,.68)){
             hit=true; e.hp-=b.dmg; e.hitFlash=12;
-            e.knockback.copy(b.dir).multiplyScalar(.16);
+            e.knockback.x=b.dir.x*.16; e.knockback.z=b.dir.z*.16;
             spawnImpact(e.mesh.position,0xff2200); G.sfx.hit();
             if(e.hp<=0&&e.deathTimer<0) killEnemy(e);
           }
@@ -763,7 +712,7 @@ export function initGame(mountRef, G, setUi) {
           V_TMP2.set(bar.x,0,bar.z);
           if(sweptHit(V_TMP3,V_TMP4,V_TMP2,.38)){
             hit=true; bar.alive=false; scene.remove(bar.mesh);
-            G.walls=G.walls.filter(w=>!(Math.abs(w.x-bar.x)<.15&&Math.abs(w.z-bar.z)<.15));
+            removeWall(bar.collider);
             spawnExplosion(bar.mesh.position.clone(),4.5,65);
           }
         }
@@ -818,55 +767,18 @@ export function initGame(mountRef, G, setUi) {
           for(let i=0;i<e.emissiveMats.length;i++) e.emissiveMats[i].emissive.setRGB(0,0,0);
         }
 
-        // Knockback
-        if(e.knockback.length()>0.001){
-          e.vel.x+=e.knockback.x; e.vel.z+=e.knockback.z; e.knockback.multiplyScalar(.6);
-        }
-        // Velocity decay
-        e.vel.multiplyScalar(.72);
-
-        const dist=P.mesh.position.distanceTo(e.mesh.position);
-        const canSeePlayer=hasLOS(e.mesh.position,P.mesh.position);
-        if(dist<15&&canSeePlayer) e.state="chase"; else if(dist>18||!canSeePlayer) e.state="patrol";
+        // Advance renderer-independent AI and movement state.
+        const canSeePlayer=hasLOS(e.position,P.position);
+        const dist=stepEnemyMovement(e,P.position,dt,G.walls,canSeePlayer);
 
         // ── Patrol ───────────────────────────────────────────────────
-        if(e.state==="patrol"){
-          e.patrolTimer-=dt;
-          if(e.patrolTimer<=0){ e.patrolDir.set((Math.random()-.5),0,(Math.random()-.5)).normalize(); e.patrolTimer=55+Math.random()*60; }
-          const px=e.mesh.position.x+e.patrolDir.x*e.cfg.spd*.65*dt;
-          const pz=e.mesh.position.z+e.patrolDir.z*e.cfg.spd*.65*dt;
-          if(!collidesWall(px,e.mesh.position.z)&&Math.abs(px)<22) e.mesh.position.x=px;
-          else e.patrolDir.negate();
-          if(!collidesWall(e.mesh.position.x,pz)&&Math.abs(pz)<22) e.mesh.position.z=pz;
-          e.mesh.rotation.y=Math.atan2(e.patrolDir.x,e.patrolDir.z);
-        }
+        if(e.state==="chase"){
+          const toDir=V_TMP5.set(P.position.x-e.position.x,0,P.position.z-e.position.z).normalize();
 
-        // ── Chase — NavAgent-style movement toward preferred distance ─
-        else {
-          const toDir=V_TMP5.subVectors(P.mesh.position,e.mesh.position).normalize();
-
-          // Strafe at preferred distance
-          e.strafeTimer-=dt;
-          if(e.strafeTimer<=0){ e.strafeDir*=-1; e.strafeTimer=30+Math.random()*40; }
-          const strafeVec=V_TMP6.set(-toDir.z,0,toDir.x).multiplyScalar(e.strafeDir);
-
-          let mx=0,mz=0;
-          if(dist>e.cfg.prefDist+1.5){
-            mx+=toDir.x*e.cfg.spd; mz+=toDir.z*e.cfg.spd;    // approach
-          } else if(dist<e.cfg.prefDist-.5){
-            mx-=toDir.x*e.cfg.spd*.6; mz-=toDir.z*e.cfg.spd*.6; // back off
-          }
-          // Strafe component
-          mx+=strafeVec.x*e.cfg.spd*.5; mz+=strafeVec.z*e.cfg.spd*.5;
-
-          const nx=e.mesh.position.x+(mx+e.vel.x)*dt, nz=e.mesh.position.z+(mz+e.vel.z)*dt;
-          if(!collidesWall(nx,e.mesh.position.z)&&Math.abs(nx)<22) e.mesh.position.x=nx;
-          if(!collidesWall(e.mesh.position.x,nz)&&Math.abs(nz)<22) e.mesh.position.z=nz;
-          e.mesh.rotation.y=Math.atan2(toDir.x,toDir.z);
-
+          
           // ── Shooting (only if LOS to player) ─────────────────────
-          e.shootTimer-=dt;
-          if(e.shootTimer<=0&&dist<e.cfg.range&&canSeePlayer){
+          const enemyAttack=chooseEnemyAttack(e,dist,canSeePlayer);
+          if(enemyAttack&&enemyAttack!==ENEMY_ATTACK.GRENADE){
             if(e.type==="shotgunner"){
               for(let i=0;i<4;i++){
                 const spread=new THREE.Vector3((Math.random()-.5)*.45,0,(Math.random()-.5)*.45);
@@ -894,7 +806,7 @@ export function initGame(mountRef, G, setUi) {
           }
 
           // Grenadier throw
-          if(e.type==="grenadier"&&e.shootTimer<=0&&dist<11&&canSeePlayer){
+          if(enemyAttack===ENEMY_ATTACK.GRENADE){
             const gm=new THREE.Mesh(new THREE.SphereGeometry(.1,6,6),new THREE.MeshLambertMaterial({color:0x556633}));
             gm.position.copy(e.mesh.position).add(new THREE.Vector3(0,.8,0)); scene.add(gm);
             const gvel=toDir.clone().multiplyScalar(.22); gvel.y=.18;
@@ -904,6 +816,9 @@ export function initGame(mountRef, G, setUi) {
           }
         }
 
+        e.mesh.position.x=e.position.x;
+        e.mesh.position.z=e.position.z;
+        e.mesh.rotation.y=e.facing;
         e.mesh.position.y=e.state==="chase"?Math.abs(Math.sin(ts*.007))*.04:0;
       });
 
@@ -913,7 +828,7 @@ export function initGame(mountRef, G, setUi) {
         b.mesh.position.addScaledVector(b.dir,b.speed*dt);
         b.life-=dt;
         if(b.life<=0||collidesWall(b.mesh.position.x,b.mesh.position.z)){scene.remove(b.mesh);return false;}
-        V_TMP2.set(P.mesh.position.x,.7,P.mesh.position.z);
+        V_TMP2.set(P.position.x,.7,P.position.z);
         V_TMP3.set(b.prevPos.x,.7,b.prevPos.z);
         V_TMP4.set(b.mesh.position.x,.7,b.mesh.position.z);
         if(P.iFrames<=0&&sweptHit(V_TMP3,V_TMP4,V_TMP2,.72)){
@@ -931,17 +846,22 @@ export function initGame(mountRef, G, setUi) {
       });
     }
 
-    requestAnimationFrame(animate);
+    G.animId=requestAnimationFrame(animate);
 
     // ── Restart ────────────────────────────────────────────────────────────
     G.restart=()=>{
+      G.timers.reset();
       G.gameState="playing"; G.wave=0;
+      G.simulation.phase="playing"; G.simulation.wave=0;
       [G.bullets,G.eBullets,G.particles,G.grenades].forEach(a=>{a.forEach(x=>scene.remove(x.mesh));a.length=0;});
       const P=G.player;
-      Object.assign(P,{hp:100,armor:50,ammo:30,grenades:3,reloading:false,reloadTimer:0,shootTimer:0,alive:true,iFrames:0,stumbleTimer:0,dodging:false,dodgeTimer:0,airstrikeTimer:0,droneTimer:0});
-      P.vel.set(0,0,0); P.knockback.set(0,0,0); P.facing=0;
+      resetPlayerState(P.state);
       P.mesh.position.set(0,0,0); P.mesh.rotation.set(0,0,0);
-      G.barrels.forEach(b=>{if(!b.alive){b.alive=true;scene.add(b.mesh);}});
+      G.barrels.forEach(b=>{
+        if(!b.alive){b.alive=true;scene.add(b.mesh);}
+        if(!G.walls.includes(b.collider)) G.walls.push(b.collider);
+        if(!G.covers.includes(b.collider)) G.covers.push(b.collider);
+      });
       const cnt=spawnEnemies(0); const wc=WAVES[0];
       setUi({hp:100,armor:50,ammo:30,grenades:3,score:0,enemies:cnt,wave:0,state:"playing",flash:false,reloading:false,dodging:false,airstrikeReady:true,droneReady:true,combo:0,kills:0,waveLabel:wc.label,obj:wc.obj});
     };

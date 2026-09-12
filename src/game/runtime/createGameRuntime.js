@@ -1,9 +1,10 @@
 import { initGame } from "../engine";
 import { disposeRuntime } from "../loop/disposeRuntime";
 import { createRuntimeActions } from "../player/actions";
+import { createTimerRegistry } from "./createTimerRegistry";
 
 export function createGameRuntime({ mountRef, setUi, config = {} }) {
-  const gameState = { config };
+  const gameState = { config, timers: createTimerRegistry() };
   const actions = createRuntimeActions(gameState, setUi);
   let started = false;
 

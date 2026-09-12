@@ -18,6 +18,7 @@ export function createRuntimeActions(gameState, setUi) {
     startMission() {
       setUi((u) => ({ ...u, state: "playing" }));
       gameState.gameState = "playing";
+      if (gameState.simulation) gameState.simulation.phase = "playing";
     },
   };
 }
